@@ -63,6 +63,7 @@ export class TagPickerBasicExample extends React.Component<ITagPickerDemoPagePro
             suggestionsHeaderText: 'Suggested Tags',
             noResultsFoundText: 'No Color Tags Found'
           }}
+          resolveDelay={300}
           disabled={this.state.isPickerDisabled}
           inputProps={{
             onBlur: (ev: React.FocusEvent<HTMLInputElement>) => console.log('onBlur called'),
