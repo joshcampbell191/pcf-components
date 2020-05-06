@@ -127,7 +127,7 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 
 		return Promise.all(promises).then(
 			results => {
-				return results!.map(result => ({ key: result[this.idAttribute], name: result[this.nameAttribute] }));
+				return results.map(result => ({ key: result[this.idAttribute], name: result[this.nameAttribute] }));
 			}
 		);
 	}
@@ -219,7 +219,7 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 	 */
 	public getOutputs(): IOutputs {
 		return {
-			tags: this.props.selectedItems!.map(items => items.key).join(",")
+			tags: this.props.selectedItems?.map(items => items.key).join(",")
 		};
 	}
 
