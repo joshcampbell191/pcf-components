@@ -100,9 +100,8 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 	}
 
 	private loadMetadata(): Promise<ComponentFramework.PropertyHelper.EntityMetadata> {
-		const entityName: string = (<any>this.context).page.entityTypeName;
 		return Promise.all([
-			this.context.utils.getEntityMetadata(entityName).then(value => this.entityMetadata = value),
+			this.context.utils.getEntityMetadata(this.entityType).then(value => this.entityMetadata = value),
 			this.context.utils.getEntityMetadata(this.relatedEntity).then(value => this.relatedEntityMetadata = value)
 		]);
 	}
@@ -182,8 +181,7 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 		const clientUrl: string = (<any>Xrm).Utility.getGlobalContext().getClientUrl();
 
 		const entityCollectionName = this.entityMetadata[EntityMetadataProperties.EntitySetName];
-		const entityId: string = (<any>this.context).page.entityId;
-		const payload = { "@odata.id" : `${clientUrl}/api/data/v9.1/${entityCollectionName}(${entityId})` };
+		const payload = { "@odata.id" : `${clientUrl}/api/data/v9.1/${entityCollectionName}(${this.entityId})` };
 
 		const relatedEntityCollectionName: string = this.relatedEntityMetadata[EntityMetadataProperties.EntitySetName];
 
@@ -203,9 +201,8 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 		const clientUrl: string = (<any>Xrm).Utility.getGlobalContext().getClientUrl();
 
 		const entityCollectionName = this.entityMetadata[EntityMetadataProperties.EntitySetName];
-		const entityId: string = (<any>this.context).page.entityId;
 
-		return window.fetch(`${clientUrl}/api/data/v9.1/${entityCollectionName}(${entityId})/${this.relationshipName}(${item.key})/$ref`, {
+		return window.fetch(`${clientUrl}/api/data/v9.1/${entityCollectionName}(${this.entityId})/${this.relationshipName}(${item.key})/$ref`, {
 			method: "DELETE",
 			headers: {
 				"Content-Type": "application/json; charset=utf-8",
