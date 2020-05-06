@@ -2,12 +2,12 @@
 <manifest>
   <control namespace="jc.pcf" constructor="TagPickerComponent" version="0.0.1" display-name-key="TagPickerComponent_Display_Key" description-key="TagPickerComponent_Desc_Key" control-type="standard">
     <!-- property node identifies a specific, configurable piece of data that the control expects from CDS -->
-    <property name="tags" display-name-key="tags_Display_Key" description-key="tags_Desc_Key" of-type="SingleLine.Text" usage="bound" required="false" />    
-    <property name="entityLogicalName" display-name-key="entityLogicalName_Display_Key" description-key="entityLogicalName_Desc_Key" of-type="SingleLine.Text" usage="input" required="true" />
-    <property name="idAttribute" display-name-key="idAttribute_Display_Key" description-key="idAttribute_Desc_Key" of-type="SingleLine.Text" usage="input" required="true" />
-    <property name="nameAttribute" display-name-key="nameAttribute_Display_Key" description-key="nameAttribute_Desc_Key" of-type="SingleLine.Text" usage="input" required="true" />
-    <!-- 
-      Property node's of-type attribute can be of-type-group attribute. 
+    <property name="tags" display-name-key="tags_Display_Key" description-key="tags_Desc_Key" of-type="SingleLine.Text" usage="bound" required="false" />
+    <property name="relatedEntity" display-name-key="relatedEntity_Display_Key" description-key="relatedEntity_Desc_Key" of-type="SingleLine.Text" usage="input" required="true" />
+    <property name="relationshipName" display-name-key="relationshipName_Display_Key" description-key="relationshipName_Desc_Key" of-type="SingleLine.Text" usage="input" required="true" />
+    <property name="relationshipEntity" display-name-key="relationshipEntity_Display_Key" description-key="relationshipEntity_Desc_Key" of-type="SingleLine.Text" usage="input" required="true" />
+    <!--
+      Property node's of-type attribute can be of-type-group attribute.
       Example:
       <type-group name="numbers">
         <type>Whole.None</type>
@@ -22,17 +22,9 @@
       <css path="css/TagPickerComponent.css" order="2" />
       <resx path="strings/TagPickerComponent.1033.resx" version="1.0.0" />
     </resources>
-    <!-- UNCOMMENT TO ENABLE THE SPECIFIED API
     <feature-usage>
-      <uses-feature name="Device.captureAudio" required="true" />
-      <uses-feature name="Device.captureImage" required="true" />
-      <uses-feature name="Device.captureVideo" required="true" />
-      <uses-feature name="Device.getBarcodeValue" required="true" />
-      <uses-feature name="Device.getCurrentPosition" required="true" />
-      <uses-feature name="Device.pickFile" required="true" />
       <uses-feature name="Utility" required="true" />
       <uses-feature name="WebAPI" required="true" />
     </feature-usage>
-    -->
   </control>
 </manifest>

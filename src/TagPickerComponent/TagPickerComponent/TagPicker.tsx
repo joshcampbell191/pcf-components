@@ -1,73 +1,51 @@
 import * as React from 'react';
 
-import { TagPicker, IBasePicker, ITag } from 'office-ui-fabric-react/lib/Pickers';
+import { TagPicker, ITag } from 'office-ui-fabric-react/lib/Pickers';
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
-import { mergeStyles } from 'office-ui-fabric-react/lib/Styling';
 
-initializeIcons(/* optional base url */);
+initializeIcons();
 
-const rootClass = mergeStyles({
-  maxWidth: 500
-});
-
-const _testTags: ITag[] = [
-  'black',
-  'blue',
-  'brown',
-  'cyan',
-  'green',
-  'magenta',
-  'mauve',
-  'orange',
-  'pink',
-  'purple',
-  'red',
-  'rose',
-  'violet',
-  'white',
-  'yellow'
-].map(item => ({ key: item, name: item }));
-
-export interface ITagPickerDemoPageProps {
-  tags?: string;  
-	resolveSuggestions: (filter: string) => Promise<ITag[]>;
+export interface ITagPickerProps {
+  selectedItems?: ITag[],
+  onChange?: (items?: ITag[]) => void;
+  onEmptyInputFocus?: (selectedItems?: ITag[]) => Promise<ITag[]>;
+	onResolveSuggestions?: (filter: string, selectedItems?: ITag[]) => Promise<ITag[]>;
 }
 
-export interface ITagPickerDemoPageState {
-  isPickerDisabled?: boolean;
+export interface ITagPickerState extends React.ComponentState, ITagPickerProps {
 }
 
-export class TagPickerBasicExample extends React.Component<ITagPickerDemoPageProps, ITagPickerDemoPageState> {
-  // All pickers extend from BasePicker specifying the item type.
-  private _picker = React.createRef<IBasePicker<ITag>>();
-
-  constructor(props: ITagPickerDemoPageProps) {
+export class TagPickerBase extends React.Component<ITagPickerProps, ITagPickerState> {
+  constructor(props: ITagPickerProps) {
     super(props);
 
     this.state = {
-      isPickerDisabled: false
+      selectedItems: props.selectedItems || []
     };
   }
 
-  public render() {
+  public componentWillReceiveProps(newProps: ITagPickerState): void {
+    this.setState(newProps);
+  }
+
+  public render(): JSX.Element {
+    const { selectedItems } = this.state;
+
     return (
-      <div className={rootClass}>        
-        Filter items on selected: This picker will show already-added suggestions but will not add duplicate tags.
+      <div className={"tagPickerComponent"}>
         <TagPicker
           removeButtonAriaLabel="Remove"
-          componentRef={this._picker}
-          onResolveSuggestions={this._onFilterChangedNoFilter}
-          onItemSelected={this._onItemSelected}
+          selectedItems={selectedItems}
+          onChange={this._onChange}
+          onResolveSuggestions={this._onResolveSuggestions}
+          onEmptyInputFocus={this._onEmptyInputFocus}
           getTextFromItem={this._getTextFromItem}
           pickerSuggestionsProps={{
             suggestionsHeaderText: 'Suggested Tags',
-            noResultsFoundText: 'No Color Tags Found'
+            noResultsFoundText: 'No Tags Found'
           }}
           resolveDelay={300}
-          disabled={this.state.isPickerDisabled}
           inputProps={{
-            onBlur: (ev: React.FocusEvent<HTMLInputElement>) => console.log('onBlur called'),
-            onFocus: (ev: React.FocusEvent<HTMLInputElement>) => console.log('onFocus called'),
             'aria-label': 'Tag Picker'
           }}
         />
@@ -79,21 +57,29 @@ export class TagPickerBasicExample extends React.Component<ITagPickerDemoPagePro
     return item.name;
   }
 
-  private _onFilterChangedNoFilter = (filter: string,  selectedItems?: ITag[] | undefined): Promise<ITag[]> => {
-    return this.props.resolveSuggestions(filter);
-  };
+  private _onChange = (items?: ITag[]): void => {
+    this.setState(
+      (prevState: ITagPickerState): ITagPickerState => {
+        prevState.selectedItems = items;
+        return prevState;
+      }
+    );
 
-  private _onItemSelected = (selectedItem?: ITag | undefined): ITag | null => {
-    if (this._picker.current && this._listContainsDocument(selectedItem, this._picker.current.items)) {
-      return null;
-    }
-    return selectedItem ?? null;
-  };
-
-  private _listContainsDocument(tag?: ITag | undefined, tagList?: ITag[]) {
-    if (!tag || !tagList || !tagList.length || tagList.length === 0) {
-      return false;
-    }
-    return tagList.filter(compareTag => compareTag.key === tag.key).length > 0;
+    if (this.props.onChange)
+      this.props.onChange(items);
   }
+
+  private _onResolveSuggestions = (filter: string,  selectedItems?: ITag[] | undefined): Promise<ITag[]> => {
+    if (this.props.onResolveSuggestions)
+      return this.props.onResolveSuggestions(filter, selectedItems);
+
+    return Promise.resolve([]);
+  };
+
+  private _onEmptyInputFocus = (selectedItems?: ITag[] | undefined): Promise<ITag[]> => {
+    if (this.props.onEmptyInputFocus)
+      return this.props.onEmptyInputFocus(selectedItems);
+
+    return Promise.resolve([]);
+  };
 }

@@ -2,22 +2,49 @@ import { IInputs, IOutputs } from "./generated/ManifestTypes";
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { ITag } from 'office-ui-fabric-react/lib/Pickers';
-import { TagPickerBasicExample, ITagPickerDemoPageProps } from './TagPicker';
+import { TagPickerBase, ITagPickerProps } from './TagPicker';
+import 'whatwg-fetch';
+
+declare const Xrm: any;
+
+// https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/entity-metadata
+enum EntityMetadataProperties {
+	EntitySetName = "EntitySetName",
+	PrimaryIdAttribute = "PrimaryIdAttribute",
+	PrimaryNameAttribute  = "PrimaryNameAttribute"
+}
 
 export class TagPickerComponent implements ComponentFramework.StandardControl<IInputs, IOutputs> {
+	private context: ComponentFramework.Context<IInputs>;
 	private notifyOutputChanged: () => void;
 	private theContainer: HTMLDivElement;
-	private props: ITagPickerDemoPageProps = {
-		resolveSuggestions: this.resolveSuggestions.bind(this),
+
+	private selectedItems: ITag[];
+
+	private props: ITagPickerProps = {
+		onChange: this.onChange.bind(this),
+		onEmptyInputFocus: this.onEmptyInputFocus.bind(this),
+		onResolveSuggestions: this.onResolveSuggestions.bind(this)
 	}
-	private context: ComponentFramework.Context<IInputs>;
+
+	private relatedEntity: string;
+	private relationshipEntity: string;
+	private relationshipName: string;
+
+	private entityMetadata: ComponentFramework.PropertyHelper.EntityMetadata;
+	private relatedEntityMetadata: ComponentFramework.PropertyHelper.EntityMetadata;
+
+	private entityId?: string;
+	private entityType: string;
+
+	private get idAttribute(): string { return this.relatedEntityMetadata ? this.relatedEntityMetadata[EntityMetadataProperties.PrimaryIdAttribute] : ""; }
+	private get nameAttribute(): string { return this.relatedEntityMetadata ? this.relatedEntityMetadata[EntityMetadataProperties.PrimaryNameAttribute] : ""; }
 
 	/**
 	 * Empty constructor.
 	 */
 	constructor()
 	{
-
 	}
 
 	/**
@@ -32,8 +59,26 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 	{
 		this.context = context;
 		this.notifyOutputChanged = notifyOutputChanged;
-		this.props.tags = context.parameters.tags.raw || "";
+		this.props.selectedItems = this.selectedItems = [];
 		this.theContainer = container;
+
+		this.relatedEntity = this.context.parameters.relatedEntity.raw || "";
+		this.relationshipEntity = this.context.parameters.relationshipEntity.raw || "";
+		this.relationshipName = this.context.parameters.relationshipName.raw || "";
+
+		this.entityId = (<any>this.context).page.entityId;
+		this.entityType =  (<any>this.context).page.entityTypeName;
+
+		this.loadMetadata().then(() => {
+			return this.getRelatedEntities();
+		})
+		.then(entities => {
+			return this.getTags(entities);
+		})
+		.then(tags => {
+			this.props.selectedItems = this.selectedItems = tags;
+			this.updateView(context);
+		});
 	}
 
 	/**
@@ -42,33 +87,133 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 	 */
 	public updateView(context: ComponentFramework.Context<IInputs>): void
 	{
+		if (context.updatedProperties.includes("tags"))
+			console.log("tags", context.parameters.tags.raw);
+
 		ReactDOM.render(
 			React.createElement(
-				TagPickerBasicExample,
+				TagPickerBase,
 				this.props
 			),
 			this.theContainer
 		);
 	}
 
-	private resolveSuggestions(filter: string): Promise<ITag[]> {
-		const entityLogicalName = this.context.parameters.entityLogicalName.raw || "";
-		const idAttribute = this.context.parameters.entityLogicalName.raw || "";
-		const nameAttribute = this.context.parameters.entityLogicalName.raw || "";
+	private loadMetadata(): Promise<ComponentFramework.PropertyHelper.EntityMetadata> {
+		const entityName: string = (<any>this.context).page.entityTypeName;
+		return Promise.all([
+			this.context.utils.getEntityMetadata(entityName).then(value => this.entityMetadata = value),
+			this.context.utils.getEntityMetadata(this.relatedEntity).then(value => this.relatedEntityMetadata = value)
+		]);
+	}
 
-		const options = `?$select=${idAttribute},${nameAttribute}&$filter=contains(${nameAttribute},${filter})`;
+	private getRelatedEntities(): Promise<ComponentFramework.WebApi.Entity[]> {
+		const options = `?$filter=${this.entityType}id eq ${this.entityId}`;
+		return this.context.webAPI.retrieveMultipleRecords(this.relationshipEntity, options).then(
+			results => { return results.entities; }
+		);
+	}
 
-		return this.context.webAPI.retrieveMultipleRecords(entityLogicalName, options).then(
-			(results) => {
+	private getTags(entities: ComponentFramework.WebApi.Entity[]): Promise<ITag[]> {
+		if (entities.length < 1) {
+			return Promise.resolve([]);
+		}
+
+		const promises = [];
+		for(let entity of entities) {
+			const relatedEntityId = entity[this.idAttribute];
+			const options = `?$select=${this.idAttribute},${this.nameAttribute}`;
+			promises.push(this.context.webAPI.retrieveRecord(this.relatedEntity, relatedEntityId, options));
+		}
+
+		return Promise.all(promises).then(
+			results => {
+				return results!.map(result => ({ key: result[this.idAttribute], name: result[this.nameAttribute] }));
+			}
+		);
+	}
+
+	private onEmptyInputFocus(selectedItems?: ITag[]): Promise<ITag[]> {
+		return this.searchTags();
+	}
+
+	private onResolveSuggestions(filter: string, selectedItems?: ITag[]): Promise<ITag[]> {
+		return this.searchTags(filter);
+	}
+
+	private searchTags(filter?: string): Promise<ITag[]> {
+		let options = `?$select=${this.idAttribute},${this.nameAttribute}&$orderby=${this.nameAttribute} asc`;
+
+		if (filter)
+			options = `${options}&$filter=contains(${this.nameAttribute},'${filter}')`;
+
+		return this.context.webAPI.retrieveMultipleRecords(this.relatedEntity, options).then(
+			results => {
 				if (results.entities.length < 1)
 					return [];
 
-				return results.entities.map((item) => ({ key: item[idAttribute], name: item[nameAttribute] }));
-			},
-			error => {
-				return [];
+				return results.entities.map(item => ({ key: item[this.idAttribute], name: item[this.nameAttribute] }));
 			}
 		);
+	}
+
+	private onChange(items?: ITag[]) : void {
+		const promises: Promise<Response>[] = [];
+
+		const itemsAdded = items?.filter(item => !this.selectedItems.some(selectedItem => selectedItem.key === item.key)) || [];
+		for(let item of itemsAdded) {
+			promises.push(this.associateItem(item));
+		}
+
+		const itemsRemoved = this.selectedItems.filter(selectedItem => !items?.some(item => item.key === selectedItem.key));
+		for (let item of itemsRemoved) {
+			promises.push(this.dissasociateItem(item));
+		}
+
+		Promise.all(promises).then(
+			results => {
+				this.props.selectedItems = this.selectedItems = items || [];
+				this.notifyOutputChanged();
+			}
+		);
+	}
+
+	private associateItem(item: ITag): Promise<Response> {
+		const clientUrl: string = (<any>Xrm).Utility.getGlobalContext().getClientUrl();
+
+		const entityCollectionName = this.entityMetadata[EntityMetadataProperties.EntitySetName];
+		const entityId: string = (<any>this.context).page.entityId;
+		const payload = { "@odata.id" : `${clientUrl}/api/data/v9.1/${entityCollectionName}(${entityId})` };
+
+		const relatedEntityCollectionName: string = this.relatedEntityMetadata[EntityMetadataProperties.EntitySetName];
+
+		return window.fetch(`${clientUrl}/api/data/v9.1/${relatedEntityCollectionName}(${item.key})/${this.relationshipName}/$ref`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json; charset=utf-8",
+				"Accept": "application/json",
+				"OData-MaxVersion": "4.0",
+				"OData-Version": "4.0"
+			},
+			body: JSON.stringify(payload)
+		});
+	}
+
+	private dissasociateItem(item: ITag): Promise<Response> {
+		const clientUrl: string = (<any>Xrm).Utility.getGlobalContext().getClientUrl();
+
+		const entityCollectionName = this.entityMetadata[EntityMetadataProperties.EntitySetName];
+		const entityId: string = (<any>this.context).page.entityId;
+
+		return window.fetch(`${clientUrl}/api/data/v9.1/${entityCollectionName}(${entityId})/${this.relationshipName}(${item.key})/$ref`, {
+			method: "DELETE",
+			headers: {
+				"Content-Type": "application/json; charset=utf-8",
+				"Accept": "application/json",
+				"OData-MaxVersion": "4.0",
+				"OData-Version": "4.0"
+			}
+		});
 	}
 
 	/**
@@ -77,7 +222,7 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 	 */
 	public getOutputs(): IOutputs {
 		return {
-			tags: this.props.tags
+			tags: this.props.selectedItems!.map(items => items.key).join(",")
 		};
 	}
 
