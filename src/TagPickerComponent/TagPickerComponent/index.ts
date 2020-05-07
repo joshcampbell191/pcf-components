@@ -200,13 +200,13 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 		// We only need to associate / dissasociate items when the entity exists.
 		if (entityExists)
 		{
-			// Get the added items.
+			// Associate the added items.
 			const itemsAdded = items?.filter(item => !this.selectedItems.some(selectedItem => selectedItem.key === item.key)) || [];
 			for(let item of itemsAdded) {
 				promises.push(this.associateItem(item));
 			}
 
-			// Get the removed items.
+			// Disassociate the removed items.
 			const itemsRemoved = this.selectedItems.filter(selectedItem => !items?.some(item => item.key === selectedItem.key));
 			for (let item of itemsRemoved) {
 				promises.push(this.disassociateItem(item));
