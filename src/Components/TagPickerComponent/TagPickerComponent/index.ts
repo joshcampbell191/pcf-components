@@ -88,6 +88,7 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 		})
 		.then(tags => {
 			this.props.selectedItems = this.selectedItems = tags;
+			this.updateView(context);
 		});
 	}
 
