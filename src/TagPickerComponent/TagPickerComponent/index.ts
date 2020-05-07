@@ -14,6 +14,15 @@ enum EntityMetadataProperties {
 	PrimaryNameAttribute  = "PrimaryNameAttribute"
 }
 
+/**
+ * Interface used to define output.
+ */
+interface ITagData {
+	relatedEntity: string,
+	relationshipName: string,
+	tags: string[]
+}
+
 export class TagPickerComponent implements ComponentFramework.StandardControl<IInputs, IOutputs> {
 	private context: ComponentFramework.Context<IInputs>;
 	private notifyOutputChanged: () => void;
@@ -26,6 +35,8 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 		onEmptyInputFocus: this.onEmptyInputFocus.bind(this),
 		onResolveSuggestions: this.onResolveSuggestions.bind(this)
 	}
+
+	private readonly prefix: string = "TAGDATA";
 
 	private relatedEntity: string;
 	private relationshipEntity: string;
@@ -77,7 +88,6 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 		})
 		.then(tags => {
 			this.props.selectedItems = this.selectedItems = tags;
-			this.updateView(context);
 		});
 	}
 
@@ -87,9 +97,6 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 	 */
 	public updateView(context: ComponentFramework.Context<IInputs>): void
 	{
-		if (context.updatedProperties.includes("tags"))
-			console.log("tags", context.parameters.tags.raw);
-
 		ReactDOM.render(
 			React.createElement(
 				TagPickerBase,
@@ -99,6 +106,9 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 		);
 	}
 
+	/**
+	 * Used to load the metadata for to the entity and related entity.
+	 */
 	private loadMetadata(): Promise<ComponentFramework.PropertyHelper.EntityMetadata> {
 		return Promise.all([
 			this.context.utils.getEntityMetadata(this.entityType).then(value => this.entityMetadata = value),
@@ -106,6 +116,9 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 		]);
 	}
 
+	/**
+	 * Used to get the relationship entities linked to the current record.
+	 */
 	private getRelatedEntities(): Promise<ComponentFramework.WebApi.Entity[]> {
 		const options = `?$filter=${this.entityType}id eq ${this.entityId}`;
 		return this.context.webAPI.retrieveMultipleRecords(this.relationshipEntity, options).then(
@@ -113,6 +126,10 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 		);
 	}
 
+	/**
+	 * Used to get the tags for a given set of entities.
+	 * @param entities A collection of entities that should be returned as tags.
+	 */
 	private getTags(entities: ComponentFramework.WebApi.Entity[]): Promise<ITag[]> {
 		if (entities.length < 1) {
 			return Promise.resolve([]);
@@ -132,14 +149,30 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 		);
 	}
 
+	/**
+	 * A callback for what should happen when a user clicks the input.
+	 * @param selectedItems A collection of selected items.
+	 */
 	private onEmptyInputFocus(selectedItems?: ITag[]): Promise<ITag[]> {
 		return this.searchTags();
 	}
 
+	/**
+	 * A callback for what should happen when a person types text into the input.
+	 * Returns the already selected items so the resolver can filter them out.
+	 * If used in conjunction with resolveDelay this will ony kick off after the delay throttle.
+	 * @param filter Text used to filter suggestions.
+	 * @param selectedItems A collection of selected items.
+	 */
 	private onResolveSuggestions(filter: string, selectedItems?: ITag[]): Promise<ITag[]> {
 		return this.searchTags(filter);
 	}
 
+	/**
+	 * Searches the related entity for a given filter.
+	 * Returns all the tags if no filter was given.
+	 * @param filter Text used to filter suggestions.
+	 */
 	private searchTags(filter?: string): Promise<ITag[]> {
 		let options = `?$select=${this.idAttribute},${this.nameAttribute}&$orderby=${this.nameAttribute} asc`;
 
@@ -156,27 +189,44 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 		);
 	}
 
+	/**
+	 * A callback for when the selected list of items changes.
+	 * @param items A collection containing the items.
+	 */
 	private onChange(items?: ITag[]) : void {
 		const promises: Promise<Response>[] = [];
+		const entityExists: boolean = (this.entityId !== undefined && this.entityId !== "00000000-0000-0000-0000-000000000000");
 
-		const itemsAdded = items?.filter(item => !this.selectedItems.some(selectedItem => selectedItem.key === item.key)) || [];
-		for(let item of itemsAdded) {
-			promises.push(this.associateItem(item));
-		}
+		// We only need to associate / dissasociate items when the entity exists.
+		if (entityExists)
+		{
+			// Get the added items.
+			const itemsAdded = items?.filter(item => !this.selectedItems.some(selectedItem => selectedItem.key === item.key)) || [];
+			for(let item of itemsAdded) {
+				promises.push(this.associateItem(item));
+			}
 
-		const itemsRemoved = this.selectedItems.filter(selectedItem => !items?.some(item => item.key === selectedItem.key));
-		for (let item of itemsRemoved) {
-			promises.push(this.dissasociateItem(item));
+			// Get the removed items.
+			const itemsRemoved = this.selectedItems.filter(selectedItem => !items?.some(item => item.key === selectedItem.key));
+			for (let item of itemsRemoved) {
+				promises.push(this.disassociateItem(item));
+			}
 		}
 
 		Promise.all(promises).then(
 			results => {
 				this.props.selectedItems = this.selectedItems = items || [];
-				this.notifyOutputChanged();
+
+				if (!entityExists)
+					this.notifyOutputChanged();
 			}
 		);
 	}
 
+	/**
+	 * Associate the item with the entity.
+	 * @param item The item to associate.
+	 */
 	private associateItem(item: ITag): Promise<Response> {
 		const clientUrl: string = (<any>Xrm).Utility.getGlobalContext().getClientUrl();
 
@@ -185,6 +235,7 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 
 		const relatedEntityCollectionName: string = this.relatedEntityMetadata[EntityMetadataProperties.EntitySetName];
 
+		// https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/webapi/associate-disassociate-entities-using-web-api
 		return window.fetch(`${clientUrl}/api/data/v9.1/${relatedEntityCollectionName}(${item.key})/${this.relationshipName}/$ref`, {
 			method: "POST",
 			headers: {
@@ -197,11 +248,16 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 		});
 	}
 
-	private dissasociateItem(item: ITag): Promise<Response> {
+	/**
+	 * Disassociate the item with the entity.
+	 * @param item The item to disassociate.
+	 */
+	private disassociateItem(item: ITag): Promise<Response> {
 		const clientUrl: string = (<any>Xrm).Utility.getGlobalContext().getClientUrl();
 
 		const entityCollectionName = this.entityMetadata[EntityMetadataProperties.EntitySetName];
 
+		// https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/webapi/associate-disassociate-entities-using-web-api
 		return window.fetch(`${clientUrl}/api/data/v9.1/${entityCollectionName}(${this.entityId})/${this.relationshipName}(${item.key})/$ref`, {
 			method: "DELETE",
 			headers: {
@@ -218,8 +274,14 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 	 * @returns an object based on nomenclature defined in manifest, expecting object[s] for property marked as “bound” or “output”
 	 */
 	public getOutputs(): IOutputs {
+		const selectedItems: ITagData = {
+			relatedEntity: this.relatedEntity,
+			relationshipName: this.relationshipName,
+			tags: this.props.selectedItems?.map(items => items.key) || []
+		};
+
 		return {
-			tags: this.props.selectedItems?.map(items => items.key).join(",")
+			tagData: `${this.prefix}:${JSON.stringify(selectedItems)}`
 		};
 	}
 

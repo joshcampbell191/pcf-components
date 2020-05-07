@@ -125,36 +125,36 @@
     <value>TagPickerComponent</value>
     <comment>Display text for TagPickerComponent description</comment>
   </data>
-  <data name="tags_Display_Key" xml:space="preserve">
-    <value>Tags</value>
-    <comment>Display text for Tags</comment>
+  <data name="tagData_Display_Key" xml:space="preserve">
+    <value>Tag Data</value>
+    <comment>Display text for Tag Data</comment>
   </data>
-  <data name="tags_Desc_Key" xml:space="preserve">
-    <value>Tags</value>
-    <comment>Display text for Tags description</comment>
+  <data name="tagData_Desc_Key" xml:space="preserve">
+    <value>Tag Data</value>
+    <comment>Display text for Tag Data description</comment>
   </data>
   <data name="relatedEntity_Display_Key" xml:space="preserve">
-    <value>relatedEntity</value>
-    <comment>Display text for relatedEntity</comment>
+    <value>Related Entity</value>
+    <comment>Display text for Related Entity</comment>
   </data>
   <data name="relatedEntity_Desc_Key" xml:space="preserve">
-    <value>relatedEntity</value>
-    <comment>Display text for relatedEntity description</comment>
+    <value>Related Entity</value>
+    <comment>Display text for Related Entity description</comment>
   </data>
   <data name="relationshipName_Display_Key" xml:space="preserve">
-    <value>RelationshipName</value>
-    <comment>Display text for RelationshipName</comment>
+    <value>Relationship Name</value>
+    <comment>Display text for Relationship Name</comment>
   </data>
   <data name="relationshipName_Desc_Key" xml:space="preserve">
-    <value>RelationshipName</value>
-    <comment>Display text for RelationshipName description</comment>
+    <value>Relationship Name</value>
+    <comment>Display text for Relationship Name description</comment>
   </data>
   <data name="relationshipEntity_Display_Key" xml:space="preserve">
-    <value>RelationshipEntity</value>
-    <comment>Display text for RelationshipEntity</comment>
+    <value>Relationship Entity</value>
+    <comment>Display text for Relationship Entity</comment>
   </data>
   <data name="relationshipEntity_Desc_Key" xml:space="preserve">
-    <value>RelationshipEntity</value>
-    <comment>Display text for RelationshipEntity description</comment>
+    <value>Relationship Entity</value>
+    <comment>Display text for Relationship Entity description</comment>
   </data>
 </root>
