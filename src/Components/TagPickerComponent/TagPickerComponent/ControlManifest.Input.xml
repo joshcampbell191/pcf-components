@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="jc.pcf" constructor="TagPickerComponent" version="0.0.1" display-name-key="TagPickerComponent_Display_Key" description-key="TagPickerComponent_Desc_Key" control-type="standard">
+  <control namespace="opc.pcf" constructor="TagPickerComponent" version="0.0.1" display-name-key="TagPickerComponent_Display_Key" description-key="TagPickerComponent_Desc_Key" control-type="standard">
     <!-- property node identifies a specific, configurable piece of data that the control expects from CDS -->
     <property name="tagData" display-name-key="tagData_Display_Key" description-key="tagData_Desc_Key" of-type="SingleLine.Text" usage="bound" required="false" />
     <property name="relatedEntity" display-name-key="relatedEntity_Display_Key" description-key="relatedEntity_Desc_Key" of-type="SingleLine.Text" usage="input" required="true" />

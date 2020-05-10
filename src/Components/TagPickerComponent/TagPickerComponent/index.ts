@@ -36,7 +36,7 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 		onResolveSuggestions: this.onResolveSuggestions.bind(this)
 	}
 
-	private readonly prefix: string = "TAGDATA";
+	private readonly prefix: string = "TAGDATA:";
 
 	private relatedEntity: string;
 	private relationshipEntity: string;
@@ -282,7 +282,7 @@ export class TagPickerComponent implements ComponentFramework.StandardControl<II
 		};
 
 		return {
-			tagData: `${this.prefix}:${JSON.stringify(selectedItems)}`
+			tagData: `${this.prefix}${JSON.stringify(selectedItems)}`
 		};
 	}
 

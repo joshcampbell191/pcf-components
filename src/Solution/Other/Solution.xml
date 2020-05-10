@@ -13,19 +13,16 @@
     <Managed>2</Managed>
     <Publisher>
       <!-- Unique Publisher Name of Cds Solution -->
-      <UniqueName>JoshuaCampbell</UniqueName>
+      <UniqueName>officeoftheprivacycommissioner</UniqueName>
       <LocalizedNames>
         <!-- Localized Cds Publisher Name in language code-->
-        <LocalizedName description="JoshuaCampbell" languagecode="1033" />
+        <LocalizedName description="Office of the Privacy Commissioner" languagecode="1033" />
       </LocalizedNames>
-      <Descriptions>
-        <!-- Description of Cds Publisher in language code -->
-        <Description description="JoshuaCampbell" languagecode="1033" />
-      </Descriptions>
+      <Descriptions />
       <EMailAddress xsi:nil="true"></EMailAddress>
       <SupportingWebsiteUrl xsi:nil="true"></SupportingWebsiteUrl>
       <!-- Customization Prefix for the Cds Publisher-->
-      <CustomizationPrefix>jc</CustomizationPrefix>
+      <CustomizationPrefix>opc</CustomizationPrefix>
       <!-- Derived Option Value Prefix for the Customization Prefix of Cds Publisher -->
       <CustomizationOptionValuePrefix>53395</CustomizationOptionValuePrefix>
       <Addresses>
@@ -88,7 +85,9 @@
         </Address>
       </Addresses>
     </Publisher>
-    <RootComponents />
+    <RootComponents>
+	  <RootComponent type="91" id="{cac788ae-6f4a-453b-8bf5-ebd4444da7d8}" schemaName="Components.Support, Version=1.0.0.0, Culture=neutral, PublicKeyToken=2d8165c36fd35df6" behavior="0" />
+    </RootComponents>
     <MissingDependencies />
   </SolutionManifest>
 </ImportExportXml>
