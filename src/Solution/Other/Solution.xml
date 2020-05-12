@@ -2,13 +2,13 @@
 <ImportExportXml version="9.1.0.643" SolutionPackageVersion="9.1" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <SolutionManifest>
     <!-- Unique Name of Cds Solution-->
-    <UniqueName>Solution</UniqueName>
+    <UniqueName>opc_PCFControls</UniqueName>
     <LocalizedNames>
       <!-- Localized Solution Name in language code -->
-      <LocalizedName description="Solution" languagecode="1033" />
+      <LocalizedName description="OPC PCF Controls" languagecode="1033" />
     </LocalizedNames>
     <Descriptions />
-    <Version>1.0</Version>
+    <Version>1.0.0</Version>
     <!-- Solution Package Type: Unmanaged(0)/Managed(1)/Both(2)-->
     <Managed>2</Managed>
     <Publisher>
@@ -86,7 +86,8 @@
       </Addresses>
     </Publisher>
     <RootComponents>
-	  <RootComponent type="91" id="{cac788ae-6f4a-453b-8bf5-ebd4444da7d8}" schemaName="Components.Support, Version=1.0.0.0, Culture=neutral, PublicKeyToken=2d8165c36fd35df6" behavior="0" />
+	    <RootComponent type="91" id="{cac788ae-6f4a-453b-8bf5-ebd4444da7d8}" schemaName="Components.Support, Version=1.0.0.0, Culture=neutral, PublicKeyToken=2d8165c36fd35df6" behavior="0" />
+      <RootComponent type="92" id="{5d2b96a3-8b23-4ac9-8ad3-f20e7aeca9ea}" behavior="0" />
     </RootComponents>
     <MissingDependencies />
   </SolutionManifest>
